@@ -1,65 +1,470 @@
-export default {
-  async fetch(request, env) {
-    const allowed = "https://swasfitnesst-rgb.github.io";
-    const cors = {
-      "Access-Control-Allow-Origin": allowed,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    };
-    if (request.method === "OPTIONS") return new Response(null, { headers: cors });
-    if (request.method !== "POST" || request.headers.get("Origin") !== allowed) {
-      return new Response("Forbidden", { status: 403, headers: cors });
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rate your session | SWAS Fitness Team</title>
+<meta name="description" content="Share your experience with SWAS Fitness Team, certified personal trainers for home personal training in Delhi NCR.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FE7F2D">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #FE7F2D;
+    --orange-deep: #E4600F;
+    --peach: #FFF1E6;
+    --peach-line: #FBD9BF;
+    --ink: #1D1B19;
+    --muted: #625C56;
+    --white: #FFFFFF;
+    --ok: #1E8E4E;
+    --radius: 18px;
+    --head: "Kanit", "Segoe UI", system-ui, sans-serif;
+    --body: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--body);
+    color: var(--ink);
+    background: var(--peach);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    line-height: 1.5;
+  }
+  .wrap { width: 100%; max-width: 480px; }
+
+  /* Brand */
+  .brand { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 0 22px; }
+  .logo-frame {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: var(--ink); color: var(--white);
+    display: grid; place-items: center; overflow: hidden;
+    border: 3px solid var(--white);
+    box-shadow: 0 6px 20px rgba(254,127,45,.28);
+  }
+  .logo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .logo-fallback { font-family: var(--head); font-weight: 700; font-size: 1.5rem; letter-spacing: .04em; }
+  .brand h1 { font-family: var(--head); font-weight: 600; font-size: 1.15rem; margin-top: 12px; }
+  .brand p { color: var(--muted); font-size: .9rem; }
+
+  /* Card */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 26px 20px 22px;
+    border: 1px solid var(--peach-line);
+    box-shadow: 0 10px 30px rgba(120,60,10,.08);
+  }
+  .card h2 { font-family: var(--head); font-weight: 600; font-size: 1.55rem; line-height: 1.25; text-align: center; }
+  .sub { text-align: center; color: var(--muted); font-size: .95rem; margin-top: 6px; }
+
+  /* Stars */
+  .stars { display: flex; justify-content: center; gap: 4px; margin: 22px 0 6px; }
+  .star {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    width: 56px; height: 56px; border-radius: 12px;
+    display: grid; place-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .star svg { width: 42px; height: 42px; fill: #E9E3DD; transition: fill .15s, transform .2s; }
+  .star.on svg { fill: var(--orange); }
+  .star.pop svg { animation: pop .35s ease; }
+  @keyframes pop { 50% { transform: scale(1.25); } }
+  .star:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .rating-label { text-align: center; min-height: 1.6em; font-weight: 600; color: var(--orange-deep); }
+
+  /* Step 2 */
+  #step2 { display: none; margin-top: 18px; border-top: 1px solid var(--peach-line); padding-top: 18px; }
+  #step2.show { display: block; animation: rise .3s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .label { font-weight: 600; font-size: .95rem; margin-bottom: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    border: 1.5px solid var(--peach-line); background: var(--white); color: var(--ink);
+    padding: 9px 14px; border-radius: 999px; font: 500 .88rem var(--body); cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .chip[aria-pressed="true"] { background: var(--peach); border-color: var(--orange); color: var(--orange-deep); }
+  .chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  textarea, select.profile-select {
+    width: 100%;
+    border: 1.5px solid var(--peach-line); border-radius: 12px;
+    padding: 12px 14px; font: 400 .95rem/1.5 var(--body); color: var(--ink);
+    background: var(--white);
+  }
+  textarea { min-height: 130px; resize: vertical; }
+  select.profile-select { margin-bottom: 12px; font-weight: 500; cursor: pointer; }
+  textarea:focus, select.profile-select:focus {
+    outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(254,127,45,.2);
+  }
+  .hint { color: var(--muted); font-size: .8rem; margin: 6px 0 16px; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: 52px; border-radius: 14px; border: 0; cursor: pointer;
+    font: 600 1rem var(--body); text-decoration: none; transition: background .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .65; cursor: not-allowed; }
+  .btn-primary { background: var(--orange); color: #1D1B19; }
+  .btn-primary:hover:not(:disabled) { background: var(--orange-deep); color: var(--white); }
+  .btn-ghost { background: var(--white); color: var(--ink); border: 1.5px solid var(--peach-line); margin-top: 10px; }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--orange); }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  #private-box { display: none; margin-top: 14px; padding: 14px; background: var(--peach); border-radius: 12px; font-size: .9rem; }
+  #private-box.show { display: block; }
+  #private-box p { margin-bottom: 4px; }
+
+  .trust { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px; margin-top: 20px; color: var(--muted); font-size: .8rem; text-align: center; }
+  footer { text-align: center; color: var(--muted); font-size: .78rem; margin-top: 18px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom));
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    background: var(--ink); color: var(--white); padding: 12px 18px; border-radius: 12px;
+    font-size: .9rem; max-width: calc(100% - 32px); text-align: center;
+    transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 360px) {
+    .star { width: 48px; height: 48px; } .star svg { width: 36px; height: 36px; }
+    .card h2 { font-size: 1.35rem; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+
+  <header class="brand">
+    <div class="logo-frame" id="logoFrame">
+      <img src="logo.png" alt="SWAS Fitness Team Logo" width="96" height="96" id="logoImg">
+    </div>
+    <h1>SWAS Fitness Team</h1>
+    <p>Certified personal trainers at your doorstep</p>
+  </header>
+
+  <section class="card" aria-labelledby="q">
+    <h2 id="q">How was your training session?</h2>
+    <p class="sub">Tap a star to rate your trainer and experience.</p>
+
+    <div class="stars" id="stars" role="radiogroup" aria-label="Rating out of 5 stars"></div>
+    <p class="rating-label" id="ratingLabel" aria-live="polite"></p>
+
+    <div id="step2">
+      <div id="chipsBlock">
+        <p class="label">What stood out? (pick any)</p>
+        <div class="chips" id="chips"></div>
+      </div>
+
+      <label class="label" for="reviewText" id="textLabel">Your review</label>
+      <textarea id="reviewText" placeholder="Write a few words about your experience"></textarea>
+      <p class="hint">Edit this in your own words. We copy it for you, then you paste it on Google.</p>
+
+      <button class="btn btn-ghost" id="aiBtn" type="button" style="margin:0 0 14px">Write it for me with AI</button>
+
+      <div id="profileBlock">
+        <label class="label" for="profileSelect">Choose Google listing</label>
+        <select class="profile-select" id="profileSelect"></select>
+      </div>
+
+      <button class="btn btn-primary" id="postBtn" type="button">Copy &amp; post on Google</button>
+
+      <div id="private-box">
+        <p><strong>Want us to fix something first?</strong></p>
+        <p>You can also tell our team directly. This does not replace your Google review.</p>
+        <a class="btn btn-ghost" id="waBtn" href="#" target="_blank" rel="noopener">Message the team on WhatsApp</a>
+      </div>
+    </div>
+  </section>
+
+  <div class="trust">
+    <span>Certified trainers</span>
+    <span>Home sessions in Delhi &amp; Gurgaon</span>
+    <span>Since 2012</span>
+  </div>
+  <footer>Your review helps more families find trusted home personal training.</footer>
+</main>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ============ CONFIGURE YOUR 3 GOOGLE PROFILES ============ */
+  var REVIEW_PROFILES = [
+    { label: "Profile 1 — SWAS Fitness Team", url: "https://g.page/r/CXI_r0HJVFPUEAE/review" },
+    { label: "Profile 2 — SWAS Fitness", url: "https://g.page/r/CY9zD9suLf4OEAE/review" },
+    { label: "Profile 3 — SWAS Home Training", url: "https://g.page/r/CT1lTTM9mhQvEAE/review" }
+  ];
+  var WHATSAPP_NUMBER = "919810450908";          // country code + number, no + or spaces
+  var AI_URL = "https://swas-review-ai.swasfitnesst.workers.dev";
+  /* ========================================================= */
+
+  var LABELS = { 1: "Poor", 2: "Fair", 3: "Good", 4: "Very good", 5: "Excellent" };
+  var CHIPS = [
+    ["Certified trainer", "My trainer was certified and knowledgeable."],
+    ["Home sessions", "Training at my own doorstep is very convenient."],
+    ["Always on time", "The trainer is always punctual."],
+    ["Weight loss", "I am seeing real progress in my weight loss."],
+    ["Stress relief", "My energy and stress levels have improved."],
+    ["Custom plan", "The workout plan is customised to my goals."],
+    ["Female trainer", "A female trainer made me feel comfortable."]
+  ];
+  var OPENERS = {
+    5: "Excellent experience with SWAS Fitness Team.",
+    4: "Really good experience with SWAS Fitness Team.",
+    3: "My experience with SWAS Fitness Team was decent.",
+    2: "My experience with SWAS Fitness Team could be better.",
+    1: "I was not happy with my experience with SWAS Fitness Team."
+  };
+
+  var rating = 0;
+  var picked = {};
+  var edited = false;
+
+  var starsEl = document.getElementById("stars");
+  var labelEl = document.getElementById("ratingLabel");
+  var step2 = document.getElementById("step2");
+  var chipsEl = document.getElementById("chips");
+  var chipsBlock = document.getElementById("chipsBlock");
+  var textEl = document.getElementById("reviewText");
+  var aiBtn = document.getElementById("aiBtn");
+  var profileBlock = document.getElementById("profileBlock");
+  var profileSelect = document.getElementById("profileSelect");
+  var postBtn = document.getElementById("postBtn");
+  var privateBox = document.getElementById("private-box");
+  var waBtn = document.getElementById("waBtn");
+  var toastEl = document.getElementById("toast");
+  var toastTimer;
+
+  function toast(msg) {
+    if (!toastEl) return;
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 3200);
+  }
+
+  /* Logo fallback if logo.png is missing or fails to load */
+  var logoImg = document.getElementById("logoImg");
+  function showLogoFallback() {
+    if (!logoImg || !logoImg.parentNode) return;
+    var f = document.createElement("span");
+    f.className = "logo-fallback";
+    f.textContent = "SWAS";
+    logoImg.replaceWith(f);
+    logoImg = null;
+  }
+  if (logoImg) {
+    logoImg.addEventListener("error", showLogoFallback);
+    if (logoImg.complete && logoImg.naturalWidth === 0) showLogoFallback();
+  }
+
+  /* Populate profile dropdown */
+  if (profileSelect) {
+    REVIEW_PROFILES.forEach(function (p, i) {
+      var opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = p.label;
+      profileSelect.appendChild(opt);
+    });
+  }
+
+  function getSelectedReviewUrl() {
+    var idx = profileSelect ? (Number(profileSelect.value) || 0) : 0;
+    var item = REVIEW_PROFILES[idx] || REVIEW_PROFILES[0];
+    return item ? item.url : "";
+  }
+
+  /* Build stars */
+  var STAR_PATH = "M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55L2.48 9.42l6.58-.96L12 2.5z";
+  var starBtns = [];
+  if (starsEl) {
+    for (var i = 1; i <= 5; i++) {
+      (function (n) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "star";
+        b.setAttribute("role", "radio");
+        b.setAttribute("aria-checked", "false");
+        b.setAttribute("aria-label", n + (n === 1 ? " star" : " stars") + ", " + LABELS[n]);
+        b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + STAR_PATH + '"/></svg>';
+        b.addEventListener("click", function () { setRating(n); });
+        b.addEventListener("keydown", function (e) {
+          if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); focusStar(Math.min(5, n + 1)); }
+          if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); focusStar(Math.max(1, n - 1)); }
+        });
+        starsEl.appendChild(b);
+        starBtns.push(b);
+      })(i);
+    }
+  }
+  function focusStar(n) {
+    if (starBtns[n - 1]) starBtns[n - 1].focus();
+    setRating(n);
+  }
+
+  /* Build chips */
+  if (chipsEl) {
+    CHIPS.forEach(function (c, idx) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.textContent = c[0];
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", function () {
+        picked[idx] = !picked[idx];
+        b.setAttribute("aria-pressed", picked[idx] ? "true" : "false");
+        if (!edited && textEl) textEl.value = buildDraft();
+      });
+      chipsEl.appendChild(b);
+    });
+  }
+
+  function buildDraft() {
+    if (!rating) return "";
+    var parts = [OPENERS[rating]];
+    CHIPS.forEach(function (c, idx) { if (picked[idx]) parts.push(c[1]); });
+    if (rating >= 4) parts.push("Recommended for home personal training in Delhi NCR.");
+    return parts.join(" ");
+  }
+
+  function syncWhatsAppLink() {
+    if (!waBtn) return;
+    var val = textEl ? textEl.value : "";
+    var msg = "Hi SWAS Fitness Team, I rated my session " + rating + "/5. " + val;
+    waBtn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg.trim());
+  }
+
+  function setRating(n) {
+    rating = n;
+    starBtns.forEach(function (b, idx) {
+      var on = idx < n;
+      b.classList.toggle("on", on);
+      b.classList.remove("pop");
+      b.setAttribute("aria-checked", idx === n - 1 ? "true" : "false");
+      b.tabIndex = (idx === n - 1) ? 0 : -1;
+    });
+    if (starBtns[n - 1]) starBtns[n - 1].classList.add("pop");
+    if (labelEl) labelEl.textContent = LABELS[n];
+
+    var high = n >= 4;
+    if (chipsBlock) chipsBlock.style.display = high ? "" : "none";
+    if (aiBtn) aiBtn.style.display = "flex";
+    if (profileBlock) profileBlock.style.display = high ? "" : "none";
+    if (privateBox) privateBox.classList.toggle("show", !high);
+
+    var textLabel = document.getElementById("textLabel");
+    if (textLabel) textLabel.textContent = high ? "Your review" : "Tell us what we can improve";
+    if (textEl) {
+      textEl.placeholder = high ? "Write a few words about your experience" : "What went wrong? Your honest feedback helps us improve.";
+      if (!edited) textEl.value = high ? buildDraft() : "";
     }
 
-    let body;
-    try { body = await request.json(); }
-    catch { return new Response("Bad request", { status: 400, headers: cors }); }
+    syncWhatsAppLink();
 
-    const rating = Math.min(5, Math.max(1, Number(body.rating) || 5));
-    const points = (Array.isArray(body.points) ? body.points : [])
-      .slice(0, 7).map(s => String(s).slice(0, 80));
+    if (step2) {
+      step2.classList.add("show");
+      if (!step2.dataset.scrolled) {
+        step2.dataset.scrolled = "1";
+        setTimeout(function () { step2.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 80);
+      }
+    }
+  }
 
-    const prompt =
-      "Write a short, natural Google review (2 to 3 sentences, simple English, " +
-      "like a real client in Delhi NCR) for SWAS Fitness Team, a home personal training " +
-      "service with certified trainers. Never call it a gym. Star rating: " + rating + "/5. " +
-      (points.length ? "Only mention these points: " + points.join("; ") + ". " : "") +
-      "Do not invent names, numbers, results or facts. No emojis or hashtags. " +
-      "Return only the review text.";
-
-    const model = env.GEMINI_MODEL || "gemini-2.5-flash";
-    const endpoint = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent";
-    const payload = JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.9, maxOutputTokens: 400 },
+  if (textEl) {
+    textEl.addEventListener("input", function () {
+      edited = true;
+      syncWhatsAppLink();
     });
+  }
 
-    let r = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-      body: payload,
-    });
+  function copyText(text) {
+    if (!text) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(function () { legacyCopy(text); });
+    } else {
+      legacyCopy(text);
+    }
+  }
+  function legacyCopy(text) {
+    var t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.position = "fixed";
+    t.style.opacity = "0";
+    document.body.appendChild(t);
+    t.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(t);
+  }
 
-    if (r.status === 503) {
-      await new Promise(resolve => setTimeout(resolve, 600));
-      r = await fetch(endpoint, {
+  if (aiBtn) {
+    aiBtn.addEventListener("click", function () {
+      if (!rating) { toast("Please tap a star rating first."); return; }
+      if (!/^https?:\/\//i.test(AI_URL)) { toast("AI link is not set yet."); return; }
+      var points = [];
+      CHIPS.forEach(function (c, idx) { if (picked[idx]) points.push(c[1]); });
+      aiBtn.disabled = true;
+      aiBtn.textContent = "Writing...";
+      fetch(AI_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: payload,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: rating, points: points })
+      })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) {
+          return { ok: r.ok, status: r.status, data: d };
+        });
+      })
+      .then(function (res) {
+        if (res.ok && res.data && res.data.text && textEl) {
+          textEl.value = res.data.text;
+          edited = true;
+          syncWhatsAppLink();
+          toast("Draft ready. Edit it in your own words.");
+        } else if (res.status === 503) {
+          toast("AI is busy right now (503). Use the draft above.");
+        } else {
+          toast("Could not write it now. Use the draft above.");
+        }
+      })
+      .catch(function () { toast("Could not reach AI. Use the draft above."); })
+      .finally(function () {
+        aiBtn.disabled = false;
+        aiBtn.textContent = "Write it for me with AI";
       });
-    }
-
-    if (!r.ok) {
-      return new Response(JSON.stringify({ error: "AI unavailable", status: r.status }), {
-        status: r.status === 503 ? 503 : 502,
-        headers: { ...cors, "Content-Type": "application/json" },
-      });
-    }
-
-    const data = await r.json();
-    const text = (data.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
-    return new Response(JSON.stringify({ text }), {
-      headers: { ...cors, "Content-Type": "application/json" },
     });
-  },
-};
+  }
+
+  if (postBtn) {
+    postBtn.addEventListener("click", function () {
+      if (!rating) { toast("Please tap a star rating first."); return; }
+      var reviewUrl = getSelectedReviewUrl();
+      if (!/^https?:\/\//i.test(reviewUrl)) {
+        toast("Google review link is not set yet. Add it in index.html.");
+        return;
+      }
+      var text = textEl ? textEl.value.trim() : "";
+      copyText(text);
+      window.open(reviewUrl, "_blank", "noopener");
+      toast(text ? "Review copied. Paste it on Google and choose your stars." : "Opening Google. Choose your stars and write your review.");
+    });
+  }
+})();
+</script>
+</body>
+</html>
