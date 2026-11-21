@@ -1,235 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Swas Fitness - Official Review Portal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #0F172A;
-        }
-        .tag-pill {
-            transition: all 0.2s ease;
-        }
-        .tag-pill.active {
-            background-color: #0ea5e9;
-            color: #ffffff;
-            border-color: #0ea5e9;
-            transform: translateY(-1px);
-        }
-        /* Toast animation */
-        #toast {
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rate your session | SWAS Fitness Team</title>
+<meta name="description" content="Share your experience with SWAS Fitness Team, certified personal trainers for home personal training in Delhi NCR.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FE7F2D">
+<link rel="icon" href="logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #FE7F2D;
+    --orange-deep: #E4600F;
+    --peach: #FFF1E6;
+    --peach-line: #FBD9BF;
+    --ink: #1D1B19;
+    --muted: #625C56;
+    --white: #FFFFFF;
+    --ok: #1E8E4E;
+    --radius: 18px;
+    --head: "Kanit", "Segoe UI", system-ui, sans-serif;
+    --body: "Plus Jakarta Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: var(--body);
+    color: var(--ink);
+    background: var(--peach);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
+    line-height: 1.5;
+  }
+  .wrap { width: 100%; max-width: 480px; }
+
+  /* Brand */
+  .brand { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 8px 0 22px; }
+  .logo-frame {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: var(--ink); color: var(--white);
+    display: grid; place-items: center; overflow: hidden;
+    border: 3px solid var(--white);
+    box-shadow: 0 6px 20px rgba(254,127,45,.28);
+  }
+  .logo-frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .logo-fallback { font-family: var(--head); font-weight: 700; font-size: 1.5rem; letter-spacing: .04em; }
+  .brand h1 { font-family: var(--head); font-weight: 600; font-size: 1.15rem; margin-top: 12px; }
+  .brand p { color: var(--muted); font-size: .9rem; }
+
+  /* Card */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 26px 20px 22px;
+    border: 1px solid var(--peach-line);
+    box-shadow: 0 10px 30px rgba(120,60,10,.08);
+  }
+  .card h2 { font-family: var(--head); font-weight: 600; font-size: 1.55rem; line-height: 1.25; text-align: center; }
+  .sub { text-align: center; color: var(--muted); font-size: .95rem; margin-top: 6px; }
+
+  /* Stars */
+  .stars { display: flex; justify-content: center; gap: 4px; margin: 22px 0 6px; }
+  .star {
+    appearance: none; border: 0; background: none; cursor: pointer;
+    width: 56px; height: 56px; border-radius: 12px;
+    display: grid; place-items: center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .star svg { width: 42px; height: 42px; fill: #E9E3DD; transition: fill .15s, transform .2s; }
+  .star.on svg { fill: var(--orange); }
+  .star.pop svg { animation: pop .35s ease; }
+  @keyframes pop { 50% { transform: scale(1.25); } }
+  .star:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  .rating-label { text-align: center; min-height: 1.6em; font-weight: 600; color: var(--orange-deep); }
+
+  /* Step 2 */
+  #step2 { display: none; margin-top: 18px; border-top: 1px solid var(--peach-line); padding-top: 18px; }
+  #step2.show { display: block; animation: rise .3s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  .label { font-weight: 600; font-size: .95rem; margin-bottom: 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .chip {
+    border: 1.5px solid var(--peach-line); background: var(--white); color: var(--ink);
+    padding: 9px 14px; border-radius: 999px; font: 500 .88rem var(--body); cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .chip[aria-pressed="true"] { background: var(--peach); border-color: var(--orange); color: var(--orange-deep); }
+  .chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  textarea {
+    width: 100%; min-height: 130px; resize: vertical;
+    border: 1.5px solid var(--peach-line); border-radius: 12px;
+    padding: 12px 14px; font: 400 .95rem/1.5 var(--body); color: var(--ink);
+  }
+  textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(254,127,45,.2); }
+  .hint { color: var(--muted); font-size: .8rem; margin: 6px 0 16px; }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; min-height: 52px; border-radius: 14px; border: 0; cursor: pointer;
+    font: 600 1rem var(--body); text-decoration: none; transition: background .15s, transform .1s;
+  }
+  .btn:active { transform: scale(.98); }
+  .btn-primary { background: var(--orange); color: #1D1B19; }
+  .btn-primary:hover { background: var(--orange-deep); color: var(--white); }
+  .btn-ghost { background: var(--white); color: var(--ink); border: 1.5px solid var(--peach-line); margin-top: 10px; }
+  .btn-ghost:hover { border-color: var(--orange); }
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+  #private-box { display: none; margin-top: 14px; padding: 14px; background: var(--peach); border-radius: 12px; font-size: .9rem; }
+  #private-box.show { display: block; }
+  #private-box p { margin-bottom: 4px; }
+
+  .trust { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 16px; margin-top: 20px; color: var(--muted); font-size: .8rem; text-align: center; }
+  footer { text-align: center; color: var(--muted); font-size: .78rem; margin-top: 18px; }
+
+  /* Toast */
+  #toast {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom));
+    transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+    background: var(--ink); color: var(--white); padding: 12px 18px; border-radius: 12px;
+    font-size: .9rem; max-width: calc(100% - 32px); text-align: center;
+    transition: opacity .2s, transform .2s;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+  @media (max-width: 360px) {
+    .star { width: 48px; height: 48px; } .star svg { width: 36px; height: 36px; }
+    .card h2 { font-size: 1.35rem; }
+  }
+</style>
 </head>
-<body class="min-h-screen text-slate-100 flex flex-col items-center justify-between p-4 sm:p-6">
+<body>
+<main class="wrap">
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 -translate-y-20 opacity-0 pointer-events-none z-50 bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl flex items-center space-x-3 text-sm font-semibold">
-        <i class="fa-solid fa-circle-check text-lg"></i>
-        <div>
-            <p>Copied to Clipboard!</p>
-            <p class="text-xs font-normal text-emerald-100">Redirecting to Google Maps...</p>
-        </div>
+  <header class="brand">
+    <div class="logo-frame" id="logoFrame">
+      <img src="logo.png" alt="SWAS Fitness Team Logo" width="96" height="96" id="logoImg">
     </div>
+    <h1>SWAS Fitness Team</h1>
+    <p>Certified personal trainers at your doorstep</p>
+  </header>
 
-    <!-- Main Card Container -->
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden my-auto">
-        
-        <!-- Header Banner -->
-        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-6 text-center border-b border-slate-800 relative">
-            <div class="absolute top-4 right-4 text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
-                <i class="fa-solid fa-shield-check"></i> Verifiable Client
-            </div>
-            <div class="w-16 h-16 bg-gradient-to-tr from-cyan-500 to-blue-600 rounded-2xl mx-auto flex items-center justify-center shadow-lg shadow-cyan-500/20 mb-3 text-2xl font-black text-white">
-                SF
-            </div>
-            <h1 class="text-xl font-extrabold tracking-tight text-white">SWAS FITNESS</h1>
-            <p class="text-xs text-cyan-400 font-semibold tracking-wider uppercase mt-0.5">Dedicated Personal Trainers</p>
-            
-            <div class="flex items-center justify-center space-x-1 text-amber-400 mt-3 text-sm">
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <span class="text-slate-400 text-xs ml-2 font-medium">(Share Your Experience)</span>
-            </div>
-        </div>
+  <section class="card" aria-labelledby="q">
+    <h2 id="q">How was your training session?</h2>
+    <p class="sub">Tap a star to rate your trainer and experience.</p>
 
-        <!-- Interactive Body -->
-        <div class="p-6 space-y-6">
-            
-            <!-- Instructions -->
-            <div>
-                <h2 class="text-base font-bold text-slate-100">Build Your Review</h2>
-                <p class="text-xs text-slate-400 mt-1">Tap highlight tags below to assemble your review text, or type your own feedback directly.</p>
-            </div>
+    <div class="stars" id="stars" role="radiogroup" aria-label="Rating out of 5 stars"></div>
+    <p class="rating-label" id="ratingLabel" aria-live="polite"></p>
 
-            <!-- Tag Categories -->
-            <div class="space-y-4">
-                
-                <!-- Category 1: Coaching & Trainers -->
-                <div>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
-                        <i class="fa-solid fa-dumbbell text-cyan-400"></i> Coaching & Trainers
-                    </span>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Expert personal training guidance with dedicated attention." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Expert guidance +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Extremely attentive and professional personal trainers." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Attentive trainers +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Highly personalized workout plans tailored to my fitness goals." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Personalized plans +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Incredibly motivating coaching staff that keeps me accountable." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Motivating coaching +</button>
-                    </div>
-                </div>
+    <div id="step2">
+      <div id="chipsBlock">
+        <p class="label">What stood out? (pick any)</p>
+        <div class="chips" id="chips"></div>
+      </div>
 
-                <!-- Category 2: Results & Transformations -->
-                <div>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
-                        <i class="fa-solid fa-chart-line text-cyan-400"></i> Results & Transformations
-                    </span>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Already seeing noticeable strength gains and muscle tone." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Strength gains +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Fantastic support for sustainable weight loss and fat reduction." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Weight loss support +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="High-energy home training sessions that push my limits safely." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">High energy sessions +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Fast and sustainable fitness results!" class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Sustainable results +</button>
-                    </div>
-                </div>
+      <label class="label" for="reviewText" id="textLabel">Your review</label>
+      <textarea id="reviewText" placeholder="Write a few words about your experience"></textarea>
+      <p class="hint">Edit this in your own words. We copy it for you, then you paste it on Google.</p>
 
-                <!-- Category 3: Service & Convenience -->
-                <div>
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-2">
-                        <i class="fa-solid fa-house-user text-cyan-400"></i> Service & Flexibility
-                    </span>
-                    <div class="flex flex-wrap gap-2">
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Wonderful convenience of having top-tier personal training right at home." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Home training convenience +</button>
-                        <button type="button" onclick="toggleTag(this)" data-phrase="Punctual, disciplined, and expert trainers across Delhi and Gurgaon." class="tag-pill text-xs bg-slate-800 text-slate-300 border border-slate-700 hover:border-cyan-500/50 px-3 py-2 rounded-xl font-medium">Professional & Punctual +</button>
-                    </div>
-                </div>
+      <button class="btn btn-primary" id="postBtn" type="button">Copy &amp; post on Google</button>
 
-            </div>
-
-            <!-- Editable Textarea Section -->
-            <div class="space-y-2">
-                <div class="flex items-center justify-between">
-                    <label for="reviewText" class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                        <i class="fa-solid fa-pen-to-square text-cyan-400"></i> Your Review Draft
-                    </label>
-                    <button type="button" onclick="resetText()" class="text-xs text-slate-400 hover:text-cyan-400 transition-colors flex items-center gap-1">
-                        <i class="fa-solid fa-rotate-left"></i> Reset
-                    </button>
-                </div>
-                <textarea id="reviewText" rows="4" oninput="updateCounter()" placeholder="Tap tags above or type your personal feedback here..." class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 transition-colors resize-none"></textarea>
-                <div class="flex justify-between items-center text-[11px] text-slate-500 px-1">
-                    <span id="tagCount">0 tags selected</span>
-                    <span id="charCount">0 chars</span>
-                </div>
-            </div>
-
-            <!-- Action Button -->
-            <button type="button" onclick="copyAndRedirect()" class="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-cyan-500/25 transition-all duration-200 flex items-center justify-center space-x-2 text-sm tracking-wide">
-                <span>Copy Text & Open Google Review</span>
-                <i class="fa-solid fa-arrow-right"></i>
-            </button>
-
-            <!-- Support Footer Info -->
-            <div class="text-center pt-2 border-t border-slate-800/80">
-                <p class="text-[11px] text-slate-500">
-                    Need help or have questions? Contact us on WhatsApp: 
-                    <a href="https://wa.me/919810450908" target="_blank" class="text-cyan-400 font-semibold hover:underline">+91 98104 50908</a>
-                </p>
-            </div>
-
-        </div>
-
+      <div id="private-box">
+        <p><strong>Want us to fix something first?</strong></p>
+        <p>You can also tell our team directly. This does not replace your Google review.</p>
+        <a class="btn btn-ghost" id="waBtn" href="#" target="_blank" rel="noopener">Message the team on WhatsApp</a>
+      </div>
     </div>
+  </section>
 
-    <!-- Footer Copyright -->
-    <footer class="mt-6 text-center text-xs text-slate-600">
-        © 2026 Swas Fitness. All rights reserved.
-    </div>
+  <div class="trust">
+    <span>Certified trainers</span>
+    <span>Home sessions in Delhi &amp; Gurgaon</span>
+    <span>Since 2012</span>
+  </div>
+  <footer>Your review helps more families find trusted home personal training.</footer>
+</main>
 
-    <!-- Script Logic -->
-    <script>
-        // CONFIGURATION: Direct Google Business Review Link for Swas Fitness
-        // Replace this placeholder link with your exact Google Business Profile Place ID review link
-        const GMB_REVIEW_URL = "https://g.page/r/YOUR_EXACT_GMB_PLACE_ID/review";
+<div id="toast" role="status" aria-live="polite"></div>
 
-        let selectedPhrases = new Set();
+<script>
+(function () {
+  "use strict";
 
-        function toggleTag(button) {
-            const phrase = button.getAttribute('data-phrase');
-            if (selectedPhrases.has(phrase)) {
-                selectedPhrases.delete(phrase);
-                button.classList.remove('active');
-            } else {
-                selectedPhrases.add(phrase);
-                button.classList.add('active');
-            }
-            compileReviewText();
-        }
+  /* ============ EDIT THESE TWO LINES ============ */
+  var REVIEW_URL = "YOUR_GOOGLE_REVIEW_LINK";   // e.g. https://g.page/r/XXXXXXXX/review
+  var WHATSAPP_NUMBER = "919810450908";          // country code + number, no + or spaces
+  /* ============================================== */
 
-        function compileReviewText() {
-            const textarea = document.getElementById('reviewText');
-            const phrasesArray = Array.from(selectedPhrases);
-            textarea.value = phrasesArray.join(' ');
-            updateCounter();
-        }
+  var LABELS = { 1: "Poor", 2: "Fair", 3: "Good", 4: "Very good", 5: "Excellent" };
+  var CHIPS = [
+    ["Certified trainer", "My trainer was certified and knowledgeable."],
+    ["Home sessions", "Training at my own doorstep is very convenient."],
+    ["Always on time", "The trainer is always punctual."],
+    ["Weight loss", "I am seeing real progress in my weight loss."],
+    ["Stress relief", "My energy and stress levels have improved."],
+    ["Custom plan", "The workout plan is customised to my goals."],
+    ["Female trainer", "A female trainer made me feel comfortable."]
+  ];
+  var OPENERS = {
+    5: "Excellent experience with SWAS Fitness Team.",
+    4: "Really good experience with SWAS Fitness Team.",
+    3: "My experience with SWAS Fitness Team was decent.",
+    2: "My experience with SWAS Fitness Team could be better.",
+    1: "I was not happy with my experience with SWAS Fitness Team."
+  };
 
-        function updateCounter() {
-            const textarea = document.getElementById('reviewText');
-            document.getElementById('charCount').innerText = `${textarea.value.length} chars`;
-            document.getElementById('tagCount').innerText = `${selectedPhrases.size} tags selected`;
-        }
+  var rating = 0;
+  var picked = {};
+  var edited = false;
 
-        function resetText() {
-            selectedPhrases.clear();
-            document.querySelectorAll('.tag-pill').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('reviewText').value = '';
-            updateCounter();
-        }
+  var starsEl = document.getElementById("stars");
+  var labelEl = document.getElementById("ratingLabel");
+  var step2 = document.getElementById("step2");
+  var chipsEl = document.getElementById("chips");
+  var chipsBlock = document.getElementById("chipsBlock");
+  var textEl = document.getElementById("reviewText");
+  var postBtn = document.getElementById("postBtn");
+  var privateBox = document.getElementById("private-box");
+  var waBtn = document.getElementById("waBtn");
+  var toastEl = document.getElementById("toast");
+  var toastTimer;
 
-        function copyAndRedirect() {
-            const textarea = document.getElementById('reviewText');
-            const textToCopy = textarea.value.trim();
+  /* Logo fallback if logo.png is missing */
+  var logoImg = document.getElementById("logoImg");
+  logoImg.addEventListener("error", function () {
+    var f = document.createElement("span");
+    f.className = "logo-fallback";
+    f.textContent = "SWAS";
+    logoImg.replaceWith(f);
+  });
 
-            if (!textToCopy) {
-                alert("Please select at least one tag or type a short review before proceeding.");
-                return;
-            }
+  /* Build stars */
+  var STAR_PATH = "M12 2.5l2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55L2.48 9.42l6.58-.96L12 2.5z";
+  var starBtns = [];
+  for (var i = 1; i <= 5; i++) {
+    (function (n) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "star";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", "false");
+      b.setAttribute("aria-label", n + (n === 1 ? " star" : " stars") + ", " + LABELS[n]);
+      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + STAR_PATH + '"/></svg>';
+      b.addEventListener("click", function () { setRating(n); });
+      b.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowRight" || e.key === "ArrowUp") { e.preventDefault(); focusStar(Math.min(5, n + 1)); }
+        if (e.key === "ArrowLeft" || e.key === "ArrowDown") { e.preventDefault(); focusStar(Math.max(1, n - 1)); }
+      });
+      starsEl.appendChild(b);
+      starBtns.push(b);
+    })(i);
+  }
+  function focusStar(n) { starBtns[n - 1].focus(); setRating(n); }
 
-            // Copy to clipboard
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    showToastAndRedirect();
-                }).catch(() => {
-                    fallbackCopyAndRedirect(textToCopy);
-                });
-            } else {
-                fallbackCopyAndRedirect(textToCopy);
-            }
-        }
+  /* Build chips */
+  CHIPS.forEach(function (c, idx) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip";
+    b.textContent = c[0];
+    b.setAttribute("aria-pressed", "false");
+    b.addEventListener("click", function () {
+      picked[idx] = !picked[idx];
+      b.setAttribute("aria-pressed", picked[idx] ? "true" : "false");
+      if (!edited) textEl.value = buildDraft();
+    });
+    chipsEl.appendChild(b);
+  });
 
-        function fallbackCopyAndRedirect(text) {
-            const textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed";  // Avoid scrolling to bottom
-            document.body.appendChild(textarea);
-            textarea.focus();
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                showToastAndRedirect();
-            } catch (err) {
-                alert("Unable to copy automatically. Your review text is ready—redirecting to Google Maps!");
-                window.location.href = GMB_REVIEW_URL;
-            }
-            document.body.removeChild(textarea);
-        }
+  function buildDraft() {
+    if (!rating) return "";
+    var parts = [OPENERS[rating]];
+    CHIPS.forEach(function (c, idx) { if (picked[idx]) parts.push(c[1]); });
+    if (rating >= 4) parts.push("Recommended for home personal training in Delhi NCR.");
+    return parts.join(" ");
+  }
 
-        function showToastAndRedirect() {
-            const
+  function setRating(n) {
+    rating = n;
+    starBtns.forEach(function (b, i) {
+      var on = i < n;
+      b.classList.toggle("on", on);
+      b.classList.remove("pop");
+      b.setAttribute("aria-checked", i === n - 1 ? "true" : "false");
+      b.tabIndex = (i === n - 1) ? 0 : -1;
+    });
+    starBtns[n - 1].classList.add("pop");
+    labelEl.textContent = LABELS[n];
+
+    var high = n >= 4;
+    chipsBlock.style.display = high ? "" : "none";
+    privateBox.classList.toggle("show", !high);
+    document.getElementById("textLabel").textContent = high ? "Your review" : "Tell us what we can improve";
+    textEl.placeholder = high ? "Write a few words about your experience" : "What went wrong? Your honest feedback helps us improve.";
+    if (!edited) textEl.value = high ? buildDraft() : "";
+
+    var msg = "Hi SWAS Fitness Team, I rated my session " + n + "/5. " + (textEl.value || "");
+    waBtn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg.trim());
+
+    step2.classList.add("show");
+    if (!step2.dataset.scrolled) {
+      step2.dataset.scrolled = "1";
+      setTimeout(function () { step2.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 80);
+    }
+  }
+
+  textEl.addEventListener("input", function () {
+    edited = true;
+    var msg = "Hi SWAS Fitness Team, I rated my session " + rating + "/5. " + textEl.value;
+    waBtn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg.trim());
+  });
+
+  function toast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastEl.classList.remove("show"); }, 3200);
+  }
+
+  function copyText(text) {
+    if (!text) return;
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).catch(function () { legacyCopy(text); });
+    } else {
+      legacyCopy(text);
+    }
+  }
+  function legacyCopy(text) {
+    var t = document.createElement("textarea");
+    t.value = text;
+    t.setAttribute("readonly", "");
+    t.style.position = "fixed";
+    t.style.opacity = "0";
+    document.body.appendChild(t);
+    t.select();
+    try { document.execCommand("copy"); } catch (e) {}
+    document.body.removeChild(t);
+  }
+
+  postBtn.addEventListener("click", function () {
+    if (!rating) { toast("Please tap a star rating first."); return; }
+    if (!/^https?:\/\//i.test(REVIEW_URL)) {
+      toast("Google review link is not set yet. Add it in index.html.");
+      return;
+    }
+    var text = textEl.value.trim();
+    copyText(text);
+    window.open(REVIEW_URL, "_blank", "noopener");
+    toast(text ? "Review copied. Paste it on Google and choose your stars." : "Opening Google. Choose your stars and write your review.");
+  });
+})();
+</script>
+</body>
+</html>
