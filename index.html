@@ -93,12 +93,17 @@
   }
   .chip[aria-pressed="true"] { background: var(--peach); border-color: var(--orange); color: var(--orange-deep); }
   .chip:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
-  textarea {
-    width: 100%; min-height: 130px; resize: vertical;
+  textarea, select.profile-select {
+    width: 100%;
     border: 1.5px solid var(--peach-line); border-radius: 12px;
     padding: 12px 14px; font: 400 .95rem/1.5 var(--body); color: var(--ink);
+    background: var(--white);
   }
-  textarea:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(254,127,45,.2); }
+  textarea { min-height: 130px; resize: vertical; }
+  select.profile-select { margin-bottom: 12px; font-weight: 500; cursor: pointer; }
+  textarea:focus, select.profile-select:focus {
+    outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(254,127,45,.2);
+  }
   .hint { color: var(--muted); font-size: .8rem; margin: 6px 0 16px; }
 
   .btn {
@@ -107,10 +112,11 @@
     font: 600 1rem var(--body); text-decoration: none; transition: background .15s, transform .1s;
   }
   .btn:active { transform: scale(.98); }
+  .btn:disabled { opacity: .65; cursor: not-allowed; }
   .btn-primary { background: var(--orange); color: #1D1B19; }
-  .btn-primary:hover { background: var(--orange-deep); color: var(--white); }
+  .btn-primary:hover:not(:disabled) { background: var(--orange-deep); color: var(--white); }
   .btn-ghost { background: var(--white); color: var(--ink); border: 1.5px solid var(--peach-line); margin-top: 10px; }
-  .btn-ghost:hover { border-color: var(--orange); }
+  .btn-ghost:hover:not(:disabled) { border-color: var(--orange); }
   .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
   #private-box { display: none; margin-top: 14px; padding: 14px; background: var(--peach); border-radius: 12px; font-size: .9rem; }
   #private-box.show { display: block; }
@@ -166,6 +172,13 @@
       <textarea id="reviewText" placeholder="Write a few words about your experience"></textarea>
       <p class="hint">Edit this in your own words. We copy it for you, then you paste it on Google.</p>
 
+      <button class="btn btn-ghost" id="aiBtn" type="button" style="margin:0 0 14px">Write it for me with AI</button>
+
+      <div id="profileBlock">
+        <label class="label" for="profileSelect">Choose Google listing</label>
+        <select class="profile-select" id="profileSelect"></select>
+      </div>
+
       <button class="btn btn-primary" id="postBtn" type="button">Copy &amp; post on Google</button>
 
       <div id="private-box">
@@ -190,10 +203,15 @@
 (function () {
   "use strict";
 
-  /* ============ EDIT THESE TWO LINES ============ */
-  var REVIEW_URL = "YOUR_GOOGLE_REVIEW_LINK";   // e.g. https://g.page/r/XXXXXXXX/review
+  /* ============ CONFIGURE YOUR 3 GOOGLE PROFILES ============ */
+  var REVIEW_PROFILES = [
+    { label: "Profile 1 — SWAS Fitness Team", url: "https://g.page/r/CXI_r0HJVFPUEAE/review" },
+    { label: "Profile 2 — SWAS Fitness", url: "https://g.page/r/CY9zD9suLf4OEAE/review" },
+    { label: "Profile 3 — SWAS Home Training", url: "https://g.page/r/CT1lTTM9mhQvEAE/review" }
+  ];
   var WHATSAPP_NUMBER = "919810450908";          // country code + number, no + or spaces
-  /* ============================================== */
+  var AI_URL = "https://swas-review-ai.swasfitnesst.workers.dev";
+  /* ========================================================= */
 
   var LABELS = { 1: "Poor", 2: "Fair", 3: "Good", 4: "Very good", 5: "Excellent" };
   var CHIPS = [
@@ -223,11 +241,28 @@
   var chipsEl = document.getElementById("chips");
   var chipsBlock = document.getElementById("chipsBlock");
   var textEl = document.getElementById("reviewText");
+  var aiBtn = document.getElementById("aiBtn");
+  var profileBlock = document.getElementById("profileBlock");
+  var profileSelect = document.getElementById("profileSelect");
   var postBtn = document.getElementById("postBtn");
   var privateBox = document.getElementById("private-box");
   var waBtn = document.getElementById("waBtn");
   var toastEl = document.getElementById("toast");
   var toastTimer;
+
+  /* Populate profile dropdown */
+  REVIEW_PROFILES.forEach(function (p, i) {
+    var opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = p.label;
+    profileSelect.appendChild(opt);
+  });
+
+  function getSelectedReviewUrl() {
+    var idx = Number(profileSelect.value) || 0;
+    var item = REVIEW_PROFILES[idx] || REVIEW_PROFILES[0];
+    return item ? item.url : "";
+  }
 
   /* Logo fallback if logo.png is missing */
   var logoImg = document.getElementById("logoImg");
@@ -284,6 +319,11 @@
     return parts.join(" ");
   }
 
+  function syncWhatsAppLink() {
+    var msg = "Hi SWAS Fitness Team, I rated my session " + rating + "/5. " + textEl.value;
+    waBtn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg.trim());
+  }
+
   function setRating(n) {
     rating = n;
     starBtns.forEach(function (b, i) {
@@ -298,13 +338,14 @@
 
     var high = n >= 4;
     chipsBlock.style.display = high ? "" : "none";
+    aiBtn.style.display = high ? "" : "none";
+    profileBlock.style.display = high ? "" : "none";
     privateBox.classList.toggle("show", !high);
     document.getElementById("textLabel").textContent = high ? "Your review" : "Tell us what we can improve";
     textEl.placeholder = high ? "Write a few words about your experience" : "What went wrong? Your honest feedback helps us improve.";
     if (!edited) textEl.value = high ? buildDraft() : "";
 
-    var msg = "Hi SWAS Fitness Team, I rated my session " + n + "/5. " + (textEl.value || "");
-    waBtn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg.trim());
+    syncWhatsAppLink();
 
     step2.classList.add("show");
     if (!step2.dataset.scrolled) {
@@ -315,8 +356,7 @@
 
   textEl.addEventListener("input", function () {
     edited = true;
-    var msg = "Hi SWAS Fitness Team, I rated my session " + rating + "/5. " + textEl.value;
-    waBtn.href = "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + encodeURIComponent(msg.trim());
+    syncWhatsAppLink();
   });
 
   function toast(msg) {
@@ -346,15 +386,46 @@
     document.body.removeChild(t);
   }
 
+  aiBtn.addEventListener("click", function () {
+    if (!rating) { toast("Please tap a star rating first."); return; }
+    if (!/^https?:\/\//i.test(AI_URL)) { toast("AI link is not set yet."); return; }
+    var points = [];
+    CHIPS.forEach(function (c, idx) { if (picked[idx]) points.push(c[1]); });
+    aiBtn.disabled = true;
+    aiBtn.textContent = "Writing...";
+    fetch(AI_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: rating, points: points })
+    })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.text) {
+        textEl.value = d.text;
+        edited = true;
+        syncWhatsAppLink();
+        toast("Draft ready. Edit it in your own words.");
+      } else {
+        toast("Could not write it now. Use the draft above.");
+      }
+    })
+    .catch(function () { toast("Could not reach AI. Use the draft above."); })
+    .finally(function () {
+      aiBtn.disabled = false;
+      aiBtn.textContent = "Write it for me with AI";
+    });
+  });
+
   postBtn.addEventListener("click", function () {
     if (!rating) { toast("Please tap a star rating first."); return; }
-    if (!/^https?:\/\//i.test(REVIEW_URL)) {
+    var reviewUrl = getSelectedReviewUrl();
+    if (!/^https?:\/\//i.test(reviewUrl)) {
       toast("Google review link is not set yet. Add it in index.html.");
       return;
     }
     var text = textEl.value.trim();
     copyText(text);
-    window.open(REVIEW_URL, "_blank", "noopener");
+    window.open(reviewUrl, "_blank", "noopener");
     toast(text ? "Review copied. Paste it on Google and choose your stars." : "Opening Google. Choose your stars and write your review.");
   });
 })();
